@@ -119,4 +119,28 @@ public class HubDAO {
         }
         return 0.0;
     }
+
+    // Fetch all sales history records for the reports table
+    public static List<Object[]> getAllSalesRecords() {
+        List<Object[]> records = new ArrayList<>();
+        String sql = "SELECT id, station_name, customer_name, time_cost, canteen_cost, total_amount, created_at FROM sales_history ORDER BY id DESC";
+        try (Connection conn = DatabaseManager.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                records.add(new Object[]{
+                        rs.getInt("id"),
+                        rs.getString("station_name"),
+                        rs.getString("customer_name"),
+                        String.format("%.2f", rs.getDouble("time_cost")),
+                        String.format("%.2f", rs.getDouble("canteen_cost")),
+                        String.format("%.2f", rs.getDouble("total_amount")),
+                        rs.getString("created_at")
+                });
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return records;
+    }
 }

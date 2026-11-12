@@ -61,11 +61,10 @@ public class MainDashboardView extends JFrame {
         contentPanel = new JPanel(cardLayout);
 
         // Placeholder panels until team members finish their UIs
-        contentPanel.add(createPlaceholderPanel("Eman's Station Live Grid goes here"), "STATIONS");
-        contentPanel.add(createPlaceholderPanel("Shahd's Canteen POS goes here"), "CANTEEN");
-        contentPanel.add(createPlaceholderPanel("Asmaa H2's Tournament Bracket goes here"), "TOURNAMENT");
-        contentPanel.add(createPlaceholderPanel("Asmaa New's Invoices & Reports go here"), "REPORTS");
-
+        contentPanel.add(new com.esportshub.ui.stations.StationGridPanel(), "STATIONS");
+        contentPanel.add(new com.esportshub.ui.canteen.CanteenPanel(), "CANTEEN");
+        contentPanel.add(new com.esportshub.ui.tournament.TournamentPanel(), "TOURNAMENT");
+        contentPanel.add(new com.esportshub.reports.ReportsPanel(), "REPORTS");
         add(contentPanel, BorderLayout.CENTER);
     }
 
@@ -97,7 +96,7 @@ public class MainDashboardView extends JFrame {
         int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to logout?", "Confirm Logout", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
             dispose();
-            // Later: new LoginView().setVisible(true);
+            new com.esportshub.auth.LoginView().setVisible(true);
         }
     }
 
