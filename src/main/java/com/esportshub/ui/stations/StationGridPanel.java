@@ -1,199 +1,87 @@
 package com.esportshub.ui.stations;
 
+import com.esportshub.core.AppTheme;
 import com.esportshub.db.HubDAO;
 import com.esportshub.engine.ActiveSession;
 import com.esportshub.engine.StationTimerService;
 import com.esportshub.model.Station;
-
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class StationGridPanel extends JPanel {
-    private final StationTimerService timerService = StationTimerService.getInstance();
-    private final Map<Integer, StationCard> cardMap = new HashMap<>();
-    private Timer uiRefreshTimer;
-
     public StationGridPanel() {
-        setLayout(new BorderLayout(15, 15));
+        setLayout(new GridLayout(0, 3, 18, 18));
+        setBackground(AppTheme.BG_DARK);
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        setBackground(new Color(18, 21, 28));
-
-        // Top Header
-        JLabel headerLabel = new JLabel("LIVE GAMING STATIONS");
-        headerLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        headerLabel.setForeground(new Color(0, 212, 255));
-        add(headerLabel, BorderLayout.NORTH);
-
-        // Stations Grid (4 columns, auto rows)
-        JPanel gridContainer = new JPanel(new GridLayout(0, 4, 15, 15));
-        gridContainer.setBackground(new Color(18, 21, 28));
 
         List<Station> stations = HubDAO.getAllStations();
-        for (Station station : stations) {
-            StationCard card = new StationCard(station);
-            cardMap.put(station.getId(), card);
-            gridContainer.add(card);
-        }
-
-        JScrollPane scrollPane = new JScrollPane(gridContainer);
-        scrollPane.setBorder(null);
-        scrollPane.getViewport().setBackground(new Color(18, 21, 28));
-        add(scrollPane, BorderLayout.CENTER);
-
-        // Start UI ticker every 1 second to update live timers and prices
-        startLiveUiUpdater();
-    }
-
-    private void startLiveUiUpdater() {
-        uiRefreshTimer = new Timer(1000, e -> {
-            for (StationCard card : cardMap.values()) {
-                card.refreshDisplay();
-            }
-        });
-        uiRefreshTimer.start();
-    }
-
-    // Inner class representing a single station card
-    private class StationCard extends JPanel {
-        private final Station station;
-        private final JLabel statusLabel;
-        private final JLabel timerLabel;
-        private final JLabel costLabel;
-        private final JButton actionButton;
-
-        public StationCard(Station station) {
-            this.station = station;
-            setLayout(new BorderLayout(8, 8));
-            setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(new Color(45, 52, 68), 2),
-                    BorderFactory.createEmptyBorder(15, 15, 15, 15)
+        for (Station s : stations) {
+            JPanel card = new JPanel(new GridLayout(4, 1, 6, 6));
+            card.setBackground(AppTheme.BG_CARD);
+            card.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(AppTheme.GREEN, 2),
+                    BorderFactory.createEmptyBorder(12, 12, 12, 12)
             ));
-            setBackground(new Color(28, 33, 44));
 
-            // Top: Station Name & Rate
-            JPanel topPanel = new JPanel(new BorderLayout());
-            topPanel.setOpaque(false);
-            JLabel nameLabel = new JLabel(station.getName());
-            nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-            nameLabel.setForeground(Color.WHITE);
+            JLabel nameLbl = new JLabel(s.name + "  [" + (int) s.hourlyRate + " EGP/hr]", SwingConstants.CENTER);
+            nameLbl.setFont(new Font("Segoe UI", Font.BOLD, 16));
+            nameLbl.setForeground(AppTheme.TEXT_WHITE);
 
-            JLabel rateLabel = new JLabel(String.format("%.0f EGP/hr", station.getHourlyRate()));
-            rateLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-            rateLabel.setForeground(Color.LIGHT_GRAY);
+            JLabel statusLbl = new JLabel("AVAILABLE", SwingConstants.CENTER);
+            statusLbl.setFont(new Font("Segoe UI", Font.BOLD, 13));
+            statusLbl.setForeground(AppTheme.GREEN);
 
-            topPanel.add(nameLabel, BorderLayout.WEST);
-            topPanel.add(rateLabel, BorderLayout.EAST);
+            JLabel timeLbl = new JLabel("00:00:00  |  0.00 EGP", SwingConstants.CENTER);
+            timeLbl.setFont(new Font("Consolas", Font.BOLD, 15));
+            timeLbl.setForeground(AppTheme.GOLD);
 
-            // Center: Status, Timer & Live Cost
-            JPanel centerPanel = new JPanel();
-            centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
-            centerPanel.setOpaque(false);
+            JButton btn = new JButton("Start Session");
+            AppTheme.styleButton(btn, AppTheme.GREEN);
 
-            statusLabel = new JLabel("AVAILABLE");
-            statusLabel.setFont(new Font("Segoe UI", Font.BOLD, 13));
-            statusLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-            timerLabel = new JLabel("00:00:00");
-            timerLabel.setFont(new Font("Consolas", Font.BOLD, 24));
-            timerLabel.setForeground(Color.WHITE);
-            timerLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-            costLabel = new JLabel("0.00 EGP");
-            costLabel.setFont(new Font("Segoe UI", Font.BOLD, 15));
-            costLabel.setForeground(new Color(255, 193, 7));
-            costLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-            centerPanel.add(Box.createVerticalStrut(5));
-            centerPanel.add(statusLabel);
-            centerPanel.add(Box.createVerticalStrut(8));
-            centerPanel.add(timerLabel);
-            centerPanel.add(Box.createVerticalStrut(5));
-            centerPanel.add(costLabel);
-
-            // Bottom: Start / Stop Button
-            actionButton = new JButton("Start Session");
-            actionButton.setFont(new Font("Segoe UI", Font.BOLD, 13));
-            actionButton.setFocusPainted(false);
-            actionButton.addActionListener(e -> handleAction());
-
-            add(topPanel, BorderLayout.NORTH);
-            add(centerPanel, BorderLayout.CENTER);
-            add(actionButton, BorderLayout.SOUTH);
-
-            refreshDisplay();
-        }
-
-        public void refreshDisplay() {
-            boolean busy = timerService.isStationBusy(station.getId());
-            if (busy) {
-                ActiveSession session = timerService.getSession(station.getId());
-                statusLabel.setText("BUSY (" + session.getCustomerName() + ")");
-                statusLabel.setForeground(new Color(255, 82, 82));
-                timerLabel.setText(session.getFormattedTime());
-                costLabel.setText(String.format("%.2f EGP", session.getTotalAmount()));
-                actionButton.setText("End & Checkout");
-                actionButton.setBackground(new Color(220, 53, 69));
-                actionButton.setForeground(Color.WHITE);
-                setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(new Color(220, 53, 69), 2),
-                        BorderFactory.createEmptyBorder(15, 15, 15, 15)
-                ));
-            } else {
-                statusLabel.setText("AVAILABLE");
-                statusLabel.setForeground(new Color(40, 200, 110));
-                timerLabel.setText("00:00:00");
-                costLabel.setText("0.00 EGP");
-                actionButton.setText("Start Session");
-                actionButton.setBackground(new Color(40, 167, 69));
-                actionButton.setForeground(Color.WHITE);
-                setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(new Color(40, 167, 69), 2),
-                        BorderFactory.createEmptyBorder(15, 15, 15, 15)
-                ));
-            }
-        }
-
-        private void handleAction() {
-            if (!timerService.isStationBusy(station.getId())) {
-                // Start new session
-                String customer = JOptionPane.showInputDialog(this, "Enter Player Name:", "Guest");
-                if (customer != null && !customer.trim().isEmpty()) {
-                    timerService.startSession(station.getId(), customer.trim(), station.getHourlyRate());
-                    HubDAO.updateStationStatus(station.getId(), "BUSY");
-                    refreshDisplay();
-                }
-            } else {
-                // End session & save receipt
-                int confirm = JOptionPane.showConfirmDialog(this,
-                        "End session for " + station.getName() + " and checkout?",
-                        "Confirm Checkout", JOptionPane.YES_NO_OPTION);
-                if (confirm == JOptionPane.YES_OPTION) {
-                    ActiveSession finished = timerService.endSession(station.getId());
-                    if (finished != null) {
-                        HubDAO.updateStationStatus(station.getId(), "AVAILABLE");
-                        HubDAO.saveSaleRecord(
-                                station.getName(),
-                                finished.getCustomerName(),
-                                finished.getTimeCost(),
-                                finished.getCanteenTotal(),
-                                finished.getTotalAmount()
-                        );
-                        JOptionPane.showMessageDialog(this,
-                                String.format("Receipt Summary (%s):\nPlayer: %s\nPlay Time: %s\nTime Cost: %.2f EGP\nCanteen: %.2f EGP\nTotal Due: %.2f EGP",
-                                        station.getName(),
-                                        finished.getCustomerName(),
-                                        finished.getFormattedTime(),
-                                        finished.getTimeCost(),
-                                        finished.getCanteenTotal(),
-                                        finished.getTotalAmount()),
-                                "Session Completed", JOptionPane.INFORMATION_MESSAGE);
-                        refreshDisplay();
+            btn.addActionListener(e -> {
+                if (!StationTimerService.isBusy(s.id)) {
+                    String player = JOptionPane.showInputDialog(this, "Player Name:", "Guest");
+                    if (player != null && !player.trim().isEmpty()) {
+                        StationTimerService.startSession(s.id, player.trim(), s.hourlyRate);
                     }
+                } else {
+                    ActiveSession finished = StationTimerService.endSession(s.id);
+                    HubDAO.saveSale(s.name, finished.customerName, finished.getTimeCost(), finished.canteenTotal, finished.getTotal());
+                    JOptionPane.showMessageDialog(this, "Total Bill: " + String.format("%.2f EGP", finished.getTotal()));
                 }
-            }
+            });
+
+            new Timer(1000, e -> {
+                if (StationTimerService.isBusy(s.id)) {
+                    ActiveSession act = StationTimerService.getSession(s.id);
+                    statusLbl.setText("BUSY - " + act.customerName);
+                    statusLbl.setForeground(AppTheme.RED);
+                    timeLbl.setText(act.getFormattedTime() + "  |  " + String.format("%.2f EGP", act.getTotal()));
+                    btn.setText("End & Checkout");
+                    btn.setBackground(AppTheme.RED);
+                    card.setBorder(BorderFactory.createCompoundBorder(
+                            BorderFactory.createLineBorder(AppTheme.RED, 2),
+                            BorderFactory.createEmptyBorder(12, 12, 12, 12)
+                    ));
+                } else {
+                    statusLbl.setText("AVAILABLE");
+                    statusLbl.setForeground(AppTheme.GREEN);
+                    timeLbl.setText("00:00:00  |  0.00 EGP");
+                    btn.setText("Start Session");
+                    btn.setBackground(AppTheme.GREEN);
+                    card.setBorder(BorderFactory.createCompoundBorder(
+                            BorderFactory.createLineBorder(AppTheme.GREEN, 2),
+                            BorderFactory.createEmptyBorder(12, 12, 12, 12)
+                    ));
+                }
+            }).start();
+
+            card.add(nameLbl);
+            card.add(statusLbl);
+            card.add(timeLbl);
+            card.add(btn);
+            add(card);
         }
     }
 }

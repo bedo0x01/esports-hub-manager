@@ -1,10 +1,10 @@
 package com.esportshub.model;
 
 public class Product {
-    private int id;
-    private String name;
-    private double price;
-    private int quantity;
+    public int id;
+    public String name;
+    public double price;
+    public int quantity;
 
     public Product(int id, String name, double price, int quantity) {
         this.id = id;
@@ -12,12 +12,6 @@ public class Product {
         this.price = price;
         this.quantity = quantity;
     }
-
-    public int getId() { return id; }
-    public String getName() { return name; }
-    public double getPrice() { return price; }
-    public int getQuantity() { return quantity; }
-    public void setQuantity(int quantity) { this.quantity = quantity; }
 
     @Override
     public String toString() {

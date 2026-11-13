@@ -4,12 +4,11 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 
 public class ActiveSession {
-    private final int stationId;
-    private final String customerName;
-    private final LocalDateTime startTime;
-    private final double hourlyRate;
-    private double canteenTotal = 0.0;
-    private boolean isFinished = false;
+    public int stationId;
+    public String customerName;
+    public LocalDateTime startTime;
+    public double hourlyRate;
+    public double canteenTotal = 0;
 
     public ActiveSession(int stationId, String customerName, double hourlyRate) {
         this.stationId = stationId;
@@ -18,40 +17,20 @@ public class ActiveSession {
         this.startTime = LocalDateTime.now();
     }
 
-    public void addCanteenCharge(double amount) {
-        this.canteenTotal += amount;
-    }
-
-    // حساب الثواني المنقضية بدقة
-    public long getElapsedSeconds() {
+    public long getSeconds() {
         return Duration.between(startTime, LocalDateTime.now()).getSeconds();
     }
 
-    // حساب تكلفة الوقت (الدقيقة = السعر بالساعة / 60)
     public double getTimeCost() {
-        long seconds = getElapsedSeconds();
-        double minutes = seconds / 60.0;
-        return minutes * (hourlyRate / 60.0);
+        return (getSeconds() / 3600.0) * hourlyRate;
     }
 
-    // الإجمالي = تكلفة الوقت + طلبات الكانتين
-    public double getTotalAmount() {
+    public double getTotal() {
         return getTimeCost() + canteenTotal;
     }
 
-    // فورمات الوقت كـ HH:MM:SS عشان يظهر ع الشاشة
     public String getFormattedTime() {
-        long sec = getElapsedSeconds();
-        long hours = sec / 3600;
-        long minutes = (sec % 3600) / 60;
-        long remainingSec = sec % 60;
-        return String.format("%02d:%02d:%02d", hours, minutes, remainingSec);
+        long s = getSeconds();
+        return String.format("%02d:%02d:%02d", s / 3600, (s % 3600) / 60, s % 60);
     }
-
-    public int getStationId() { return stationId; }
-    public String getCustomerName() { return customerName; }
-    public LocalDateTime getStartTime() { return startTime; }
-    public double getCanteenTotal() { return canteenTotal; }
-    public boolean isFinished() { return isFinished; }
-    public void markFinished() { this.isFinished = true; }
 }

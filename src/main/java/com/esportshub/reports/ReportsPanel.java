@@ -1,113 +1,60 @@
 package com.esportshub.reports;
 
 import com.esportshub.auth.SessionContext;
+import com.esportshub.core.AppTheme;
 import com.esportshub.db.HubDAO;
-
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.util.List;
 
 public class ReportsPanel extends JPanel {
-    private DefaultTableModel tableModel;
-    private JTable salesTable;
-    private JLabel totalRevenueLabel;
+    private DefaultTableModel model = new DefaultTableModel(new String[]{"ID", "Station", "Customer", "Time", "Canteen", "Total", "Date"}, 0);
+    private JTable table = new JTable(model);
+    private JLabel revLabel = new JLabel();
 
     public ReportsPanel() {
         setLayout(new BorderLayout(15, 15));
+        setBackground(AppTheme.BG_DARK);
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        setBackground(new Color(18, 21, 28));
 
-        // Top Bar: Title + Total Revenue Card
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setOpaque(false);
+        JPanel top = new JPanel(new BorderLayout());
+        top.setBackground(AppTheme.BG_CARD);
+        top.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
 
-        JLabel headerLabel = new JLabel("FINANCIAL REPORTS & INVOICES");
-        headerLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        headerLabel.setForeground(new Color(0, 212, 255));
+        revLabel.setFont(new Font("Segoe UI", Font.BOLD, 17));
+        revLabel.setForeground(AppTheme.GOLD);
 
-        totalRevenueLabel = new JLabel("Total Revenue: 0.00 EGP");
-        totalRevenueLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        totalRevenueLabel.setForeground(new Color(40, 200, 110));
+        JButton refreshBtn = new JButton("Refresh");
+        AppTheme.styleButton(refreshBtn, AppTheme.ACCENT_PURPLE);
 
-        topPanel.add(headerLabel, BorderLayout.WEST);
-        topPanel.add(totalRevenueLabel, BorderLayout.EAST);
-        add(topPanel, BorderLayout.NORTH);
+        top.add(revLabel, BorderLayout.WEST);
+        top.add(refreshBtn, BorderLayout.EAST);
 
-        // Center: Sales History Table
-        String[] columns = {"ID", "Station", "Customer", "Time Cost (EGP)", "Canteen (EGP)", "Total (EGP)", "Timestamp"};
-        tableModel = new DefaultTableModel(columns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
+        AppTheme.styleTable(table);
 
-        salesTable = new JTable(tableModel);
-        salesTable.setRowHeight(28);
-        salesTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
-        JScrollPane scrollPane = new JScrollPane(salesTable);
-        add(scrollPane, BorderLayout.CENTER);
+        JButton pdfBtn = new JButton("Export Selected Invoice to PDF");
+        AppTheme.styleButton(pdfBtn, AppTheme.GREEN);
 
-        // Bottom: Action Buttons
-        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        bottomPanel.setOpaque(false);
+        refreshBtn.addActionListener(e -> load());
+        pdfBtn.addActionListener(e -> {
+            int r = table.getSelectedRow();
+            if (r == -1) return;
+            String path = PdfInvoiceGenerator.createPdf(
+                    model.getValueAt(r, 0).toString(), model.getValueAt(r, 1).toString(),
+                    model.getValueAt(r, 2).toString(), model.getValueAt(r, 3).toString(),
+                    model.getValueAt(r, 4).toString(), model.getValueAt(r, 5).toString());
+            JOptionPane.showMessageDialog(this, "Saved: " + path);
+        });
 
-        JButton refreshBtn = new JButton("Refresh Data");
-        refreshBtn.setFocusPainted(false);
-        refreshBtn.addActionListener(e -> loadReportsData());
-
-        JButton exportPdfBtn = new JButton("Export Selected Invoice to PDF");
-        exportPdfBtn.setBackground(new Color(0, 150, 255));
-        exportPdfBtn.setForeground(Color.WHITE);
-        exportPdfBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        exportPdfBtn.setFocusPainted(false);
-        exportPdfBtn.addActionListener(e -> exportSelectedInvoice());
-
-        bottomPanel.add(refreshBtn);
-        bottomPanel.add(exportPdfBtn);
-        add(bottomPanel, BorderLayout.SOUTH);
-
-        loadReportsData();
+        add(top, BorderLayout.NORTH);
+        add(new JScrollPane(table), BorderLayout.CENTER);
+        add(pdfBtn, BorderLayout.SOUTH);
+        load();
     }
 
-    public void loadReportsData() {
-        tableModel.setRowCount(0);
-        List<Object[]> records = HubDAO.getAllSalesRecords();
-        for (Object[] row : records) {
-            tableModel.addRow(row);
-        }
-
-        if (SessionContext.isAdmin()) {
-            double total = HubDAO.getTotalRevenue();
-            totalRevenueLabel.setText(String.format("Total Revenue: %.2f EGP", total));
-        } else {
-            totalRevenueLabel.setText("Total Revenue: [Admin Only]");
-            totalRevenueLabel.setForeground(Color.GRAY);
-        }
-    }
-
-    private void exportSelectedInvoice() {
-        int selectedRow = salesTable.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Please select an invoice row from the table first.", "No Selection", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        String id = tableModel.getValueAt(selectedRow, 0).toString();
-        String station = tableModel.getValueAt(selectedRow, 1).toString();
-        String customer = tableModel.getValueAt(selectedRow, 2).toString();
-        String timeCost = tableModel.getValueAt(selectedRow, 3).toString();
-        String canteenCost = tableModel.getValueAt(selectedRow, 4).toString();
-        String total = tableModel.getValueAt(selectedRow, 5).toString();
-
-        String pdfPath = PdfInvoiceGenerator.generateInvoicePdf(id, station, customer, timeCost, canteenCost, total);
-        if (pdfPath != null) {
-            JOptionPane.showMessageDialog(this,
-                    "PDF Invoice exported successfully!\nSaved at:\n" + pdfPath,
-                    "PDF Generated", JOptionPane.INFORMATION_MESSAGE);
-        } else {
-            JOptionPane.showMessageDialog(this, "Failed to generate PDF invoice.", "Error", JOptionPane.ERROR_MESSAGE);
-        }
+    private void load() {
+        model.setRowCount(0);
+        for (Object[] row : HubDAO.getAllSales()) model.addRow(row);
+        revLabel.setText(SessionContext.isAdmin() ? "Total Revenue: " + String.format("%.2f EGP", HubDAO.getTotalRevenue()) : "Revenue: Admin Only");
     }
 }
