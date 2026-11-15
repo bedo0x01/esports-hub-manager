@@ -6,70 +6,37 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
+// Admin-only panel to create or remove CASHIER/ADMIN accounts
 public class StaffManagementPanel extends JPanel {
     private DefaultTableModel model = new DefaultTableModel(new String[]{"ID", "Username", "Role"}, 0);
-    private JTable table = new JTable(model);
 
     public StaffManagementPanel() {
         setLayout(new BorderLayout(15, 15));
         setBackground(AppTheme.BG_DARK);
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        JPanel topForm = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
-        topForm.setBackground(AppTheme.BG_CARD);
+        JTextField u = new JTextField(10), p = new JTextField(10);
+        JComboBox<String> rBox = new JComboBox<>(new String[]{"CASHIER", "ADMIN"});
+        JButton add = AppTheme.btn("Add Staff", AppTheme.GREEN), del = AppTheme.btn("Delete Selected", AppTheme.RED);
+        JTable table = new JTable(model);
 
-        JLabel l1 = new JLabel("User:");
-        l1.setForeground(AppTheme.TEXT_WHITE);
-        JLabel l2 = new JLabel("Pass:");
-        l2.setForeground(AppTheme.TEXT_WHITE);
-        JLabel l3 = new JLabel("Role:");
-        l3.setForeground(AppTheme.TEXT_WHITE);
+        // Reloads user table from database
+        Runnable load = () -> { model.setRowCount(0); for (Object[] r : HubDAO.getAllUsers()) model.addRow(r); };
 
-        JTextField userField = new JTextField(10);
-        JTextField passField = new JTextField(10);
-        JComboBox<String> roleBox = new JComboBox<>(new String[]{"CASHIER", "ADMIN"});
-        JButton addBtn = new JButton("Add Staff");
-        AppTheme.styleButton(addBtn, AppTheme.GREEN);
+        // Adds new staff user with selected role
+        add.addActionListener(e -> { if (HubDAO.addUser(u.getText(), p.getText(), (String) rBox.getSelectedItem())) { u.setText(""); p.setText(""); load.run(); } });
 
-        topForm.add(l1);
-        topForm.add(userField);
-        topForm.add(l2);
-        topForm.add(passField);
-        topForm.add(l3);
-        topForm.add(roleBox);
-        topForm.add(addBtn);
+        // Deletes selected user (main admin id=1 is protected in HubDAO)
+        del.addActionListener(e -> { if (table.getSelectedRow() != -1) { HubDAO.deleteUser((int) model.getValueAt(table.getSelectedRow(), 0)); load.run(); } });
 
-        AppTheme.styleTable(table);
+        JPanel top = new JPanel(); top.setBackground(AppTheme.BG_CARD);
+        top.add(AppTheme.lbl("User:", Color.WHITE)); top.add(u);
+        top.add(AppTheme.lbl("Pass:", Color.WHITE)); top.add(p);
+        top.add(rBox); top.add(add);
 
-        JButton deleteBtn = new JButton("Delete Selected User");
-        AppTheme.styleButton(deleteBtn, AppTheme.RED);
-
-        addBtn.addActionListener(e -> {
-            if (HubDAO.addUser(userField.getText(), passField.getText(), (String) roleBox.getSelectedItem())) {
-                userField.setText("");
-                passField.setText("");
-                refresh();
-            } else {
-                JOptionPane.showMessageDialog(this, "Username already exists!");
-            }
-        });
-
-        deleteBtn.addActionListener(e -> {
-            int row = table.getSelectedRow();
-            if (row != -1) {
-                HubDAO.deleteUser((int) model.getValueAt(row, 0));
-                refresh();
-            }
-        });
-
-        add(topForm, BorderLayout.NORTH);
+        add(top, BorderLayout.NORTH);
         add(new JScrollPane(table), BorderLayout.CENTER);
-        add(deleteBtn, BorderLayout.SOUTH);
-        refresh();
-    }
-
-    private void refresh() {
-        model.setRowCount(0);
-        for (Object[] row : HubDAO.getAllUsers()) model.addRow(row);
+        add(del, BorderLayout.SOUTH);
+        load.run();
     }
 }

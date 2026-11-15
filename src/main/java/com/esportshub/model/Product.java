@@ -1,10 +1,10 @@
 package com.esportshub.model;
 
+// Represents a canteen item with price and available stock
 public class Product {
-    public int id;
+    public int id, quantity;
     public String name;
     public double price;
-    public int quantity;
 
     public Product(int id, String name, double price, int quantity) {
         this.id = id;
@@ -13,7 +13,7 @@ public class Product {
         this.quantity = quantity;
     }
 
-    @Override
+    // Formats item display inside JComboBox dropdowns
     public String toString() {
         return name + " (" + price + " EGP)";
     }

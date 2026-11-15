@@ -1,26 +1,21 @@
 package com.esportshub.reports;
 
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.kernel.pdf.*;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Paragraph;
 import java.io.File;
 
+// Generates printable PDF payment receipts using iText 7 library
 public class PdfInvoiceGenerator {
-    public static String createPdf(String id, String station, String customer, String timeCost, String canteenCost, String total) {
+    // Creates PDF file in invoices/ folder and returns its file path
+    public static String createPdf(String id, String st, String cust, String t, String c, String tot) {
         try {
             new File("invoices").mkdirs();
             String path = "invoices/Invoice_" + id + ".pdf";
             Document doc = new Document(new PdfDocument(new PdfWriter(path)));
-            doc.add(new Paragraph("ESPORTS HUB RECEIPT"));
-            doc.add(new Paragraph("Invoice ID: " + id));
-            doc.add(new Paragraph("Station: " + station + " | Customer: " + customer));
-            doc.add(new Paragraph("Time Cost: " + timeCost + " EGP | Canteen: " + canteenCost + " EGP"));
-            doc.add(new Paragraph("TOTAL PAID: " + total + " EGP"));
+            doc.add(new Paragraph("ESPORTS HUB RECEIPT #" + id + "\nStation: " + st + " | Customer: " + cust + "\nTime: " + t + " EGP | Canteen: " + c + " EGP\nTOTAL PAID: " + tot + " EGP"));
             doc.close();
-            return new File(path).getAbsolutePath();
-        } catch (Exception e) {
-            return null;
-        }
+            return path;
+        } catch (Exception e) { return null; }
     }
 }

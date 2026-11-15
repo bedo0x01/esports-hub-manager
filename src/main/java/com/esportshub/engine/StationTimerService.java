@@ -1,24 +1,20 @@
 package com.esportshub.engine;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
+// Shared memory store linking active stations between Stations UI and Canteen POS
 public class StationTimerService {
     public static final Map<Integer, ActiveSession> sessions = new HashMap<>();
 
-    public static void startSession(int stationId, String customer, double rate) {
-        sessions.put(stationId, new ActiveSession(stationId, customer, rate));
-    }
+    // Starts a new session on a station
+    public static void startSession(int id, String cust, double rate) { sessions.put(id, new ActiveSession(id, cust, rate)); }
 
-    public static ActiveSession endSession(int stationId) {
-        return sessions.remove(stationId);
-    }
+    // Ends session and removes it from active map
+    public static ActiveSession endSession(int id) { return sessions.remove(id); }
 
-    public static boolean isBusy(int stationId) {
-        return sessions.containsKey(stationId);
-    }
+    // Checks if station is currently occupied
+    public static boolean isBusy(int id) { return sessions.containsKey(id); }
 
-    public static ActiveSession getSession(int stationId) {
-        return sessions.get(stationId);
-    }
+    // Retrieves active session details for a station
+    public static ActiveSession getSession(int id) { return sessions.get(id); }
 }

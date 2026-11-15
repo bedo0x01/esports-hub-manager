@@ -5,81 +5,57 @@ import com.esportshub.engine.TournamentEngine;
 import com.esportshub.model.Match;
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 
+// Interactive 3-round tournament bracket UI
 public class TournamentPanel extends JPanel {
     private TournamentEngine engine;
-    private JPanel bracketPanel = new JPanel(new GridLayout(1, 3, 18, 18));
-    private JLabel champLabel = new JLabel("Champion: TBD");
+    private JPanel bracket = new JPanel(new GridLayout(1, 3, 15, 15));
+    private JLabel champ = AppTheme.lbl("Champion: TBD", AppTheme.GOLD);
 
     public TournamentPanel() {
         setLayout(new BorderLayout(15, 15));
         setBackground(AppTheme.BG_DARK);
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        bracket.setBackground(AppTheme.BG_DARK);
 
-        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
-        top.setBackground(AppTheme.BG_CARD);
-
-        JButton startBtn = new JButton("Start New 8-Team Tournament");
-        AppTheme.styleButton(startBtn, AppTheme.ACCENT_PURPLE);
-
-        champLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        champLabel.setForeground(AppTheme.GOLD);
-
-        top.add(startBtn);
-        top.add(champLabel);
-
-        bracketPanel.setBackground(AppTheme.BG_DARK);
-
-        startBtn.addActionListener(e -> {
-            List<String> teams = Arrays.asList("Falcons", "NAVI", "Liquid", "Cloud9", "FaZe", "Fnatic", "G2", "Vitality");
-            engine = new TournamentEngine(teams);
-            drawBracket();
+        // Starts a new tournament with 8 shuffled teams
+        JButton start = AppTheme.btn("Start 8-Team Tournament", AppTheme.PURPLE);
+        start.addActionListener(e -> {
+            engine = new TournamentEngine(Arrays.asList("Falcons", "NAVI", "Liquid", "Cloud9", "FaZe", "Fnatic", "G2", "Vitality"));
+            draw();
         });
 
-        add(top, BorderLayout.NORTH);
-        add(bracketPanel, BorderLayout.CENTER);
+        JPanel top = new JPanel(); top.setBackground(AppTheme.BG_CARD);
+        top.add(start); top.add(champ);
+        add(top, BorderLayout.NORTH); add(bracket, BorderLayout.CENTER);
     }
 
-    private void drawBracket() {
-        bracketPanel.removeAll();
-        bracketPanel.add(buildRoundColumn("QUARTERFINALS", engine.round1));
-        bracketPanel.add(buildRoundColumn("SEMIFINALS", engine.round2));
-        bracketPanel.add(buildRoundColumn("GRAND FINAL", engine.round3));
-        champLabel.setText("Champion: " + engine.champion);
-        bracketPanel.revalidate();
-        bracketPanel.repaint();
+    // Re-renders Quarterfinals, Semifinals, and Grand Final columns
+    private void draw() {
+        bracket.removeAll();
+        bracket.add(col("Quarterfinals", engine.round1));
+        bracket.add(col("Semifinals", engine.round2));
+        bracket.add(col("Final", engine.round3));
+        champ.setText("Champion: " + engine.champion);
+        bracket.revalidate(); bracket.repaint();
     }
 
-    private JPanel buildRoundColumn(String title, List<Match> matches) {
-        JPanel col = new JPanel(new GridLayout(5, 1, 10, 10));
-        col.setBackground(AppTheme.BG_CARD);
-        col.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        JLabel header = new JLabel(title, SwingConstants.CENTER);
-        header.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        header.setForeground(AppTheme.ACCENT_CYAN);
-        col.add(header);
-
+    // Builds a single round column with clickable team buttons to advance winners
+    private JPanel col(String title, List<Match> matches) {
+        JPanel c = new JPanel(new GridLayout(5, 1, 10, 10));
+        c.setBackground(AppTheme.BG_CARD);
+        c.add(new JLabel(title, SwingConstants.CENTER));
         for (Match m : matches) {
-            JPanel box = new JPanel(new GridLayout(2, 1, 4, 4));
-            box.setBackground(AppTheme.BG_DARK);
-            JButton b1 = new JButton(m.player1);
-            JButton b2 = new JButton(m.player2);
-
-            AppTheme.styleButton(b1, m.player1.equals(m.winner) ? AppTheme.GREEN : AppTheme.BG_SIDEBAR);
-            AppTheme.styleButton(b2, m.player2.equals(m.winner) ? AppTheme.GREEN : AppTheme.BG_SIDEBAR);
-
-            b1.setEnabled(!m.isCompleted());
-            b2.setEnabled(!m.isCompleted());
-            b1.addActionListener(e -> { engine.setWinner(m, m.player1); drawBracket(); });
-            b2.addActionListener(e -> { engine.setWinner(m, m.player2); drawBracket(); });
-
-            box.add(b1);
-            box.add(b2);
-            col.add(box);
+            JPanel box = new JPanel(new GridLayout(2, 1));
+            JButton b1 = AppTheme.btn(m.player1, m.player1.equals(m.winner) ? AppTheme.GREEN : AppTheme.BG_DARK);
+            JButton b2 = AppTheme.btn(m.player2, m.player2.equals(m.winner) ? AppTheme.GREEN : AppTheme.BG_DARK);
+            b1.setEnabled(!m.isCompleted()); b2.setEnabled(!m.isCompleted());
+            b1.addActionListener(e -> { engine.setWinner(m, m.player1); draw(); });
+            b2.addActionListener(e -> { engine.setWinner(m, m.player2); draw(); });
+            box.add(b1); box.add(b2); c.add(box);
         }
-        return col;
+        return c;
     }
 }

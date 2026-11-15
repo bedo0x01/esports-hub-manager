@@ -5,6 +5,7 @@ import com.esportshub.db.DatabaseManager;
 import com.formdev.flatlaf.FlatDarkLaf;
 import javax.swing.*;
 
+// Application entry point: initializes database, applies FlatDarkLaf theme, and opens LoginView
 public class Main {
     public static void main(String[] args) {
         DatabaseManager.initializeDatabase();

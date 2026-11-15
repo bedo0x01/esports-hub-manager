@@ -1,10 +1,9 @@
 package com.esportshub.auth;
 
+// Holds logged-in user info and role for RBAC permission checks
 public class SessionContext {
-    public static String username = "";
-    public static String role = "";
+    public static String username = "", role = "";
 
-    public static boolean isAdmin() {
-        return "ADMIN".equalsIgnoreCase(role);
-    }
+    // Returns true if current user is an ADMIN
+    public static boolean isAdmin() { return "ADMIN".equalsIgnoreCase(role); }
 }
