@@ -22,7 +22,7 @@ public class MainDashboardView extends JFrame {
         content.add(new CanteenPanel(), "2");
         content.add(new TournamentPanel(), "3");
         content.add(new ReportsPanel(), "4");
-        // Staff management panel is only loaded for ADMIN role
+                            // Staff management panel is only loaded for ADMIN role
         if (SessionContext.isAdmin()) content.add(new StaffManagementPanel(), "5");
 
         JPanel menu = new JPanel(new GridLayout(6, 1, 10, 10));

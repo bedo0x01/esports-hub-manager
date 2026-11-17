@@ -23,7 +23,7 @@ public class DatabaseManager {
                 st.execute("INSERT INTO stations (name, status, hourly_rate) VALUES ('PC 1','AVAILABLE',25),('PC 2','AVAILABLE',25),('PC 3','AVAILABLE',30),('PC 4','AVAILABLE',30),('PS5 1','AVAILABLE',45),('PS5 2','AVAILABLE',45)");
             }
             if (st.executeQuery("SELECT COUNT(*) FROM products").getInt(1) == 0) {
-                st.execute("INSERT INTO products (name, price, quantity) VALUES ('Pepsi',15,50),('Red Bull',45,30),('Chips',10,40),('Water',7,60)");
+                st.execute("INSERT INTO products (name, price, quantity) VALUES ('Pepsi',15,50),('Red Bull',45,30),('Chips',10,40),('Water',7,60)('noodles',30,60)");
             }
         } catch (Exception e) { e.printStackTrace(); }
     }
