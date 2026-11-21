@@ -2,29 +2,52 @@ package com.esportshub.db;
 
 import java.sql.*;
 
-// Manages SQLite connection and initial table creation
 public class DatabaseManager {
-    // Opens connection to local SQLite file
-    public static Connection getConnection() throws SQLException {
+    public static Connection connect() throws SQLException {
         return DriverManager.getConnection("jdbc:sqlite:esports_hub.db");
     }
 
-    // Creates database tables and seeds default users, stations, and products
-    public static void initializeDatabase() {
-        try (Connection c = getConnection(); Statement st = c.createStatement()) {
-            st.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT, role TEXT)");
-            st.execute("CREATE TABLE IF NOT EXISTS stations (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, status TEXT, hourly_rate REAL)");
-            st.execute("CREATE TABLE IF NOT EXISTS products (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, price REAL, quantity INTEGER)");
-            st.execute("CREATE TABLE IF NOT EXISTS sales_history (id INTEGER PRIMARY KEY AUTOINCREMENT, station_name TEXT, customer_name TEXT, time_cost REAL, canteen_cost REAL, total_amount REAL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
+    public static void init() {
+        try (Connection c = connect(); Statement s = c.createStatement()) {
+            // إنشاء الجداول بالأعمدة الجديدة
+            s.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT, role TEXT)");
+            s.execute("CREATE TABLE IF NOT EXISTS stations (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, rate REAL)");
+            s.execute("CREATE TABLE IF NOT EXISTS products (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, price REAL, qty INTEGER)");
+            s.execute("CREATE TABLE IF NOT EXISTS sales (id INTEGER PRIMARY KEY AUTOINCREMENT, station TEXT, customer TEXT, time_cost REAL, canteen_cost REAL, total REAL)");
 
-            st.execute("INSERT OR IGNORE INTO users VALUES (1, 'admin', '1234', 'ADMIN'), (2, 'cashier', '1234', 'CASHIER')");
+            // لو الجداول كانت مبنية بالأعمدة القديمة، نعيد بناء stations و products
+            try {
+                s.executeQuery("SELECT rate FROM stations LIMIT 1");
+            } catch (SQLException e) {
+                s.execute("DROP TABLE IF EXISTS stations");
+                s.execute("CREATE TABLE stations (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, rate REAL)");
+            }
 
-            if (st.executeQuery("SELECT COUNT(*) FROM stations").getInt(1) == 0) {
-                st.execute("INSERT INTO stations (name, status, hourly_rate) VALUES ('PC 1','AVAILABLE',25),('PC 2','AVAILABLE',25),('PC 3','AVAILABLE',30),('PC 4','AVAILABLE',30),('PS5 1','AVAILABLE',45),('PS5 2','AVAILABLE',45)");
+            try {
+                s.executeQuery("SELECT qty FROM products LIMIT 1");
+            } catch (SQLException e) {
+                s.execute("DROP TABLE IF EXISTS products");
+                s.execute("CREATE TABLE products (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, price REAL, qty INTEGER)");
             }
-            if (st.executeQuery("SELECT COUNT(*) FROM products").getInt(1) == 0) {
-                st.execute("INSERT INTO products (name, price, quantity) VALUES ('Pepsi',15,50),('Red Bull',45,30),('Chips',10,40),('Water',7,60)('noodles',30,60)");
+
+            try {
+                s.executeQuery("SELECT station FROM sales LIMIT 1");
+            } catch (SQLException e) {
+                s.execute("DROP TABLE IF EXISTS sales");
+                s.execute("CREATE TABLE sales (id INTEGER PRIMARY KEY AUTOINCREMENT, station TEXT, customer TEXT, time_cost REAL, canteen_cost REAL, total REAL)");
             }
-        } catch (Exception e) { e.printStackTrace(); }
+
+            // إضافة البيانات الافتراضية
+            s.execute("INSERT OR IGNORE INTO users VALUES (1,'admin','1234','ADMIN'), (2,'cashier','1234','CASHIER')");
+
+            if (s.executeQuery("SELECT COUNT(*) FROM stations").getInt(1) == 0)
+                s.execute("INSERT INTO stations (name,rate) VALUES ('PC 1',25),('PC 2',25),('PC 3',30),('PS5 1',45),('PS5 2',45)");
+
+            if (s.executeQuery("SELECT COUNT(*) FROM products").getInt(1) == 0)
+                s.execute("INSERT INTO products (name,price,qty) VALUES ('Pepsi',15,50),('Red Bull',45,30),('Chips',10,40)");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

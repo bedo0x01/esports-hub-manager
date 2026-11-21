@@ -8,43 +8,43 @@ import com.esportshub.ui.tournament.TournamentPanel;
 import javax.swing.*;
 import java.awt.*;
 
-// Main application window using CardLayout for switching modules and RBAC visibility
 public class MainDashboardView extends JFrame {
     public MainDashboardView() {
-        setTitle("Esports Hub - " + SessionContext.username + " (" + SessionContext.role + ")");
-        setSize(1100, 700);
+        setTitle("Esports Hub - " + SessionContext.user + " (" + SessionContext.role + ")");
+        setSize(950, 600);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
         CardLayout cards = new CardLayout();
-        JPanel content = new JPanel(cards);
-        content.add(new StationGridPanel(), "1");
-        content.add(new CanteenPanel(), "2");
-        content.add(new TournamentPanel(), "3");
-        content.add(new ReportsPanel(), "4");
-                            // Staff management panel is only loaded for ADMIN role
-        if (SessionContext.isAdmin()) content.add(new StaffManagementPanel(), "5");
+        JPanel mainArea = new JPanel(cards);
+        mainArea.add(new StationGridPanel(), "stations");
+        mainArea.add(new CanteenPanel(), "canteen");
+        mainArea.add(new TournamentPanel(), "tournament");
+        mainArea.add(new ReportsPanel(), "reports");
+        if (SessionContext.isAdmin()) mainArea.add(new StaffManagementPanel(), "staff");
 
-        JPanel menu = new JPanel(new GridLayout(6, 1, 10, 10));
-        menu.setBackground(AppTheme.BG_CARD);
-        menu.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
+        JPanel sideMenu = new JPanel(new GridLayout(6, 1, 8, 8));
+        sideMenu.setBackground(AppTheme.CARD);
 
-        JButton b1 = AppTheme.btn("Stations", AppTheme.BG_DARK), b2 = AppTheme.btn("Canteen", AppTheme.BG_DARK);
-        JButton b3 = AppTheme.btn("Tournament", AppTheme.BG_DARK), b4 = AppTheme.btn("Reports", AppTheme.BG_DARK);
-        JButton b5 = AppTheme.btn("Staff", AppTheme.PURPLE), b6 = AppTheme.btn("Logout", AppTheme.RED);
+        JButton b1 = AppTheme.button("Stations", AppTheme.BG);
+        JButton b2 = AppTheme.button("Canteen", AppTheme.BG);
+        JButton b3 = AppTheme.button("Tournament", AppTheme.BG);
+        JButton b4 = AppTheme.button("Reports", AppTheme.BG);
+        JButton b5 = AppTheme.button("Staff", AppTheme.PURPLE);
+        JButton b6 = AppTheme.button("Logout", AppTheme.RED);
 
-        b1.addActionListener(e -> cards.show(content, "1"));
-        b2.addActionListener(e -> cards.show(content, "2"));
-        b3.addActionListener(e -> cards.show(content, "3"));
-        b4.addActionListener(e -> cards.show(content, "4"));
-        b5.addActionListener(e -> cards.show(content, "5"));
+        b1.addActionListener(e -> cards.show(mainArea, "stations"));
+        b2.addActionListener(e -> cards.show(mainArea, "canteen"));
+        b3.addActionListener(e -> cards.show(mainArea, "tournament"));
+        b4.addActionListener(e -> cards.show(mainArea, "reports"));
+        b5.addActionListener(e -> cards.show(mainArea, "staff"));
         b6.addActionListener(e -> { dispose(); new LoginView().setVisible(true); });
 
-        menu.add(b1); menu.add(b2); menu.add(b3); menu.add(b4);
-        if (SessionContext.isAdmin()) menu.add(b5);
-        menu.add(b6);
+        sideMenu.add(b1); sideMenu.add(b2); sideMenu.add(b3); sideMenu.add(b4);
+        if (SessionContext.isAdmin()) sideMenu.add(b5);
+        sideMenu.add(b6);
 
-        add(menu, BorderLayout.WEST);
-        add(content, BorderLayout.CENTER);
+        add(sideMenu, BorderLayout.WEST);
+        add(mainArea, BorderLayout.CENTER);
     }
 }

@@ -7,47 +7,41 @@ import com.esportshub.model.Station;
 import javax.swing.*;
 import java.awt.*;
 
-// Live dashboard grid displaying all stations with 1-second Swing Timer updates
 public class StationGridPanel extends JPanel {
     public StationGridPanel() {
-        setLayout(new GridLayout(0, 3, 15, 15));
-        setBackground(AppTheme.BG_DARK);
-        setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        setLayout(new GridLayout(0, 3, 12, 12));
 
-        for (Station s : HubDAO.getAllStations()) {
-            JPanel card = new JPanel(new GridLayout(4, 1, 5, 5));
-            card.setBackground(AppTheme.BG_CARD);
-            JLabel title = new JLabel(s.name + " (" + (int) s.hourlyRate + " EGP/hr)", SwingConstants.CENTER);
-            title.setForeground(Color.WHITE);
-            JLabel status = new JLabel("AVAILABLE", SwingConstants.CENTER), time = new JLabel("00:00:00 | 0.00 EGP", SwingConstants.CENTER);
-            time.setForeground(AppTheme.GOLD);
-            JButton btn = AppTheme.btn("Start", AppTheme.GREEN);
+        for (Station s : HubDAO.getStations()) {
+            JPanel card = new JPanel(new GridLayout(4, 1));
+            card.setBackground(AppTheme.CARD);
 
-            // Toggles between starting a new session and checking out an active session
+            JLabel nameLbl = new JLabel(s.name + " (" + s.rate + " EGP/hr)", SwingConstants.CENTER);
+            JLabel statusLbl = new JLabel("AVAILABLE", SwingConstants.CENTER);
+            JLabel billLbl = new JLabel("0 sec | 0.0 EGP", SwingConstants.CENTER);
+            JButton btn = AppTheme.button("Start", AppTheme.GREEN);
+
             btn.addActionListener(e -> {
                 if (!StationTimerService.isBusy(s.id)) {
-                    String p = JOptionPane.showInputDialog(this, "Player Name:", "Guest");
-                    if (p != null && !p.isEmpty()) StationTimerService.startSession(s.id, p, s.hourlyRate);
+                    String name = JOptionPane.showInputDialog(this, "Player Name:");
+                    if (name != null && !name.isEmpty()) StationTimerService.start(s.id, name, s.rate);
                 } else {
-                    ActiveSession f = StationTimerService.endSession(s.id);
-                    HubDAO.saveSale(s.name, f.customerName, f.getTimeCost(), f.canteenTotal, f.getTotal());
-                    JOptionPane.showMessageDialog(this, "Total Bill: " + String.format("%.2f EGP", f.getTotal()));
+                    ActiveSession session = StationTimerService.stop(s.id);
+                    HubDAO.addSale(s.name, session.player, session.getTimeCost(), session.canteenCost);
+                    JOptionPane.showMessageDialog(this, "Total Bill: " + session.getTotal() + " EGP");
                 }
             });
 
-            // Updates card colors, timer, and running bill every 1000ms safely on Swing EDT
             new Timer(1000, e -> {
                 boolean busy = StationTimerService.isBusy(s.id);
-                ActiveSession a = StationTimerService.getSession(s.id);
-                status.setText(busy ? "BUSY - " + a.customerName : "AVAILABLE");
-                status.setForeground(busy ? AppTheme.RED : AppTheme.GREEN);
-                time.setText(busy ? a.getFormattedTime() + " | " + String.format("%.2f EGP", a.getTotal()) : "00:00:00 | 0.00 EGP");
-                btn.setText(busy ? "End & Pay" : "Start");
+                ActiveSession a = StationTimerService.active.get(s.id);
+                statusLbl.setText(busy ? "BUSY: " + a.player : "AVAILABLE");
+                statusLbl.setForeground(busy ? AppTheme.RED : AppTheme.GREEN);
+                billLbl.setText(busy ? a.getSeconds() + " sec | " + a.getTotal() + " EGP" : "0 sec | 0.0 EGP");
+                btn.setText(busy ? "Stop & Pay" : "Start");
                 btn.setBackground(busy ? AppTheme.RED : AppTheme.GREEN);
-                card.setBorder(BorderFactory.createLineBorder(busy ? AppTheme.RED : AppTheme.GREEN, 2));
             }).start();
 
-            card.add(title); card.add(status); card.add(time); card.add(btn);
+            card.add(nameLbl); card.add(statusLbl); card.add(billLbl); card.add(btn);
             add(card);
         }
     }

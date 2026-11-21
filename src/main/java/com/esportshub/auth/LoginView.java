@@ -5,37 +5,32 @@ import com.esportshub.db.HubDAO;
 import javax.swing.*;
 import java.awt.*;
 
-// Login screen authenticating users against SQLite database
 public class LoginView extends JFrame {
     public LoginView() {
         setTitle("Esports Hub - Login");
-        setSize(340, 210);
+        setSize(320, 180);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
+        setLayout(new GridLayout(3, 2, 10, 10));
 
-        JPanel p = new JPanel(new GridLayout(3, 2, 10, 12));
-        p.setBackground(AppTheme.BG_DARK);
-        p.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        JTextField userField = new JTextField();
+        JPasswordField passField = new JPasswordField();
+        JButton loginBtn = AppTheme.button("Login", AppTheme.PURPLE);
 
-        JTextField u = new JTextField();
-        JPasswordField pass = new JPasswordField();
-        JButton btn = AppTheme.btn("Sign In", AppTheme.PURPLE);
+        add(new JLabel("Username:")); add(userField);
+        add(new JLabel("Password:")); add(passField);
+        add(new JLabel(""));          add(loginBtn);
 
-        p.add(AppTheme.lbl("Username:", Color.WHITE)); p.add(u);
-        p.add(AppTheme.lbl("Password:", Color.WHITE)); p.add(pass);
-        p.add(new JLabel()); p.add(btn);
-
-        // Verifies credentials and opens MainDashboardView on success
-        btn.addActionListener(e -> {
-            String role = HubDAO.login(u.getText().trim(), new String(pass.getPassword()).trim());
+        loginBtn.addActionListener(e -> {
+            String role = HubDAO.login(userField.getText(), new String(passField.getPassword()));
             if (role != null) {
-                SessionContext.username = u.getText().trim();
+                SessionContext.user = userField.getText();
                 SessionContext.role = role;
                 dispose();
                 new MainDashboardView().setVisible(true);
-            } else JOptionPane.showMessageDialog(this, "Invalid login!");
+            } else {
+                JOptionPane.showMessageDialog(this, "Wrong username or password!");
+            }
         });
-
-        add(p);
     }
 }

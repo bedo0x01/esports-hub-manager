@@ -6,37 +6,45 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
-// Admin-only panel to create or remove CASHIER/ADMIN accounts
 public class StaffManagementPanel extends JPanel {
-    private DefaultTableModel model = new DefaultTableModel(new String[]{"ID", "Username", "Role"}, 0);
-
     public StaffManagementPanel() {
-        setLayout(new BorderLayout(15, 15));
-        setBackground(AppTheme.BG_DARK);
-        setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        JTextField u = new JTextField(10), p = new JTextField(10);
-        JComboBox<String> rBox = new JComboBox<>(new String[]{"CASHIER", "ADMIN"});
-        JButton add = AppTheme.btn("Add Staff", AppTheme.GREEN), del = AppTheme.btn("Delete Selected", AppTheme.RED);
+        setLayout(new BorderLayout(10, 10));
+        DefaultTableModel model = new DefaultTableModel(new String[]{"ID", "Username", "Role"}, 0);
         JTable table = new JTable(model);
 
-        // Reloads user table from database
-        Runnable load = () -> { model.setRowCount(0); for (Object[] r : HubDAO.getAllUsers()) model.addRow(r); };
+        Runnable refresh = () -> {
+            model.setRowCount(0);
+            for (Object[] row : HubDAO.getUsers()) model.addRow(row);
+        };
 
-        // Adds new staff user with selected role
-        add.addActionListener(e -> { if (HubDAO.addUser(u.getText(), p.getText(), (String) rBox.getSelectedItem())) { u.setText(""); p.setText(""); load.run(); } });
+        JTextField uField = new JTextField(8);
+        JTextField pField = new JTextField(8);
+        JComboBox<String> rBox = new JComboBox<>(new String[]{"CASHIER", "ADMIN"});
+        JButton addBtn = AppTheme.button("Add", AppTheme.GREEN);
+        JButton delBtn = AppTheme.button("Delete Selected", AppTheme.RED);
 
-        // Deletes selected user (main admin id=1 is protected in HubDAO)
-        del.addActionListener(e -> { if (table.getSelectedRow() != -1) { HubDAO.deleteUser((int) model.getValueAt(table.getSelectedRow(), 0)); load.run(); } });
+        addBtn.addActionListener(e -> {
+            HubDAO.addUser(uField.getText(), pField.getText(), (String) rBox.getSelectedItem());
+            uField.setText(""); pField.setText("");
+            refresh.run();
+        });
 
-        JPanel top = new JPanel(); top.setBackground(AppTheme.BG_CARD);
-        top.add(AppTheme.lbl("User:", Color.WHITE)); top.add(u);
-        top.add(AppTheme.lbl("Pass:", Color.WHITE)); top.add(p);
-        top.add(rBox); top.add(add);
+        delBtn.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row != -1) {
+                HubDAO.deleteUser((int) model.getValueAt(row, 0));
+                refresh.run();
+            }
+        });
+
+        JPanel top = new JPanel();
+        top.add(new JLabel("User:")); top.add(uField);
+        top.add(new JLabel("Pass:")); top.add(pField);
+        top.add(rBox); top.add(addBtn);
 
         add(top, BorderLayout.NORTH);
         add(new JScrollPane(table), BorderLayout.CENTER);
-        add(del, BorderLayout.SOUTH);
-        load.run();
+        add(delBtn, BorderLayout.SOUTH);
+        refresh.run();
     }
 }

@@ -1,29 +1,24 @@
 package com.esportshub.engine;
 
-import java.time.*;
-
-// Tracks an active gaming session's elapsed time, time cost, and canteen orders
 public class ActiveSession {
-    public int stationId;
-    public String customerName;
-    public LocalDateTime startTime = LocalDateTime.now();
-    public double hourlyRate, canteenTotal = 0;
+    public String player;
+    public long startTime = System.currentTimeMillis();
+    public double rate, canteenCost = 0;
 
-    public ActiveSession(int stationId, String customerName, double hourlyRate) {
-        this.stationId = stationId;
-        this.customerName = customerName;
-        this.hourlyRate = hourlyRate;
+    public ActiveSession(String player, double rate) {
+        this.player = player;
+        this.rate = rate;
     }
 
-    // Calculates exact elapsed seconds since session started
-    public long getSeconds() { return Duration.between(startTime, LocalDateTime.now()).getSeconds(); }
+    public long getSeconds() {
+        return (System.currentTimeMillis() - startTime) / 1000;
+    }
 
-    // Calculates playing time cost based on hourly rate
-    public double getTimeCost() { return (getSeconds() / 3600.0) * hourlyRate; }
+    public double getTimeCost() {
+        return Math.round(((getSeconds() / 3600.0) * rate) * 100.0) / 100.0;
+    }
 
-    // Returns combined bill (playing time + canteen orders)
-    public double getTotal() { return getTimeCost() + canteenTotal; }
-
-    // Formats elapsed seconds as HH:MM:SS
-    public String getFormattedTime() { long s = getSeconds(); return String.format("%02d:%02d:%02d", s / 3600, (s % 3600) / 60, s % 60); }
+    public double getTotal() {
+        return Math.round((getTimeCost() + canteenCost) * 100.0) / 100.0;
+    }
 }
